@@ -18,28 +18,58 @@ function App() {
 function Registration() {
   const [users, setUsers] = useState([]);
 
-  // Fetch JSON Data
+  // Fetch JSON Data (GET Request)
   useEffect(() => {
-    fetch("/users.json")
-      .then((response) => response.json())
-      .then((data) => setUsers(data))
-      .catch((error) => console.error("Error fetching users:", error));
-  }, []);
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/users");
 
-  const handleRegister = (event) => {
+        if (!response.ok) throw new Error(`Error fetching users: ${response.status}`);
+
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+      fetchUsers();
+    }, []);
+
+  const handleRegister = async (event) => {
     event.preventDefault(); // Mencegah submit form secara default
 
-    const name = event.target.name.value;
     const email = event.target.email.value;
     const password = event.target.password.value;
+    const newUser = {email, password};
 
     // Cek apakah email sudah terdaftar
     const existingUser = users.find((user) => user.email === email);
     if (existingUser) {
       alert("Email already registered. Please use a different email.");
-    } else {
-      alert("Registration successful!");
-      // Di sini Anda bisa menambahkan logika untuk menyimpan data ke backend
+      return;
+    } 
+
+    try {
+      // POST Request to Register New User
+      const response = await fetch("http://localhost:5000/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+
+      if (response.status === 201) {
+        const createdUser = await response.json();
+        setUsers([...users, createdUser]); // Add new user to state
+        alert("Resgistration Successful!");
+      } else {
+        throw new Error(`Failed to register: ${response.status}`)
+      }
+    } catch (error) {
+      console.error(error.message);
+      alert("Error during registration, Please try again.");
     }
   };
 
@@ -67,12 +97,22 @@ function Registration() {
 function Login() {
   const [users, setUsers] = useState([]);
 
-  // Fetch JSON Data
+  // Fetch JSON Data (GET Request)
   useEffect(() => {
-    fetch("/users.json")
-      .then((response) => response.json())
-      .then((data) => setUsers(data))
-      .catch((error) => console.error("Error fetching users:", error));
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/users");
+
+        if (!response.ok) throw new Error(`Error fetching users: ${response.status}`);
+
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
+    fetchUsers();
   }, []);
 
   const handleLogin = (event) => {
@@ -81,15 +121,10 @@ function Login() {
     const email = event.target.email.value;
     const password = event.target.password.value;
   
-    console.log("Input Email:", email); // Debug email
-    console.log("Input Password:", password); // Debug password
-    console.log("Fetched Users:", users); // Debug data fetched
-  
+    // Validate email and password
     const user = users.find(
       (user) => user.email === email && user.password === password
     );
-  
-    console.log("Found User:", user); // Debug apakah user ditemukan
   
     if (user) {
       alert(`Welcome back, ${user.email}!`);
